@@ -36,7 +36,10 @@ jobs:
           cache: true
       - name: Install Crossplane CLI
         run: |
-          curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | XP_CHANNEL=stable sh
+          # Pin version explicitly — `XP_CHANNEL=stable` resolves a
+          # `current` pointer that periodically goes missing
+          # ("version current exists on channel stable" error).
+          curl -sL https://raw.githubusercontent.com/crossplane/crossplane/master/install.sh | XP_VERSION=v2.0.2 sh
           sudo mv ./crossplane /usr/local/bin/
           # `crossplane version` hits the cluster for the server
           # version; we don't have a kubeconfig in CI. `xpkg --help`
