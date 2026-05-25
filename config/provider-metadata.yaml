@@ -1,0 +1,112 @@
+name: hops-ops/listmonk
+resources:
+    listmonk_client:
+        subCategory: ""
+        description: An OpenPanel SDK credential (Client). type=write is what your front-end SDK ships with; type=read reads analytics out via the API; type=root can call /manage. The secret is returned only on create.
+        name: listmonk_client
+        title: listmonk_client Resource - listmonk
+        examples:
+            - name: web_sdk
+              manifest: |-
+                {
+                  "cors": "https://example.com https://www.example.com",
+                  "name": "Marketing site - Web SDK",
+                  "project_id": "${listmonk_project.marketing_site.id}",
+                  "type": "write"
+                }
+              references:
+                project_id: listmonk_project.marketing_site.id
+            - name: automation
+              manifest: |-
+                {
+                  "name": "Terraform automation",
+                  "project_id": "${listmonk_project.marketing_site.id}",
+                  "type": "root"
+                }
+              references:
+                project_id: listmonk_project.marketing_site.id
+        argumentDocs:
+            cors: (List of String) List of allowed origins (write clients only).
+            created_at: (String)
+            id: (String) Client ID assigned by OpenPanel. Used as the SDK's clientId and the listmonk-client-id header value.
+            name: (String) Human-readable name shown in the OpenPanel dashboard.
+            project_id: (String) Owning Project ID. Required.
+            secret: (String, Sensitive) The sec_* secret. Populated only at create-time; subsequent reads return null.
+            type: (String) One of read, write, root. Drives which API surfaces accept this Client. Immutable after create.
+            updated_at: (String)
+        importStatements:
+            - |-
+              # Note: importing a Client populates state but cannot recover the
+              # `secret` attribute — OpenPanel does not return it on subsequent reads.
+              # Operators who need the secret post-import must either store it
+              # out-of-band at create time or recreate the Client.
+              terraform import listmonk_client.web_sdk <client-id>
+    listmonk_organization:
+        subCategory: ""
+        description: An OpenPanel Organization. The top-level tenant primitive; scopes Projects, Clients, References, and Members.
+        name: listmonk_organization
+        title: listmonk_organization Resource - listmonk
+        examples:
+            - name: acme
+              manifest: |-
+                {
+                  "name": "Acme",
+                  "timezone": "America/Chicago"
+                }
+        argumentDocs:
+            created_at: (String)
+            id: (String) Organization ID. Slugified from the name when not specified at create-time.
+            name: (String) Human-readable Organization name. Shown in the OpenPanel dashboard.
+            timezone: (String) IANA timezone (e.g. America/Chicago). Drives the dashboard's default reporting window.
+            updated_at: (String)
+        importStatements:
+            - terraform import listmonk_organization.acme <organization-id>
+    listmonk_project:
+        subCategory: ""
+        description: An OpenPanel Project. Projects scope SDK clients and event references; they are the unit a tenant app integrates against.
+        name: listmonk_project
+        title: listmonk_project Resource - listmonk
+        examples:
+            - name: marketing_site
+              manifest: |-
+                {
+                  "cors": "https://example.com https://www.example.com",
+                  "domain": "example.com",
+                  "name": "Marketing site"
+                }
+        argumentDocs:
+            cors: (List of String) List of allowed origins for the Project's write clients (the JS SDK CORS allowlist).
+            created_at: (String) RFC 3339 timestamp.
+            domain: (String) Primary site domain associated with the Project. Optional metadata.
+            id: (String) Project ID assigned by OpenPanel.
+            name: (String) Human-readable Project name. Shown in the OpenPanel dashboard.
+            organization_id: (String) ID of the Organization this Project belongs to. Inferred from the provider's root Client credential.
+            updated_at: (String) RFC 3339 timestamp.
+        importStatements:
+            - terraform import listmonk_project.marketing_site <project-id>
+    listmonk_reference:
+        subCategory: ""
+        description: A Reference annotates an event in the OpenPanel timeline (deploy, campaign, incident). Surfaces on dashboards alongside the analytics.
+        name: listmonk_reference
+        title: listmonk_reference Resource - listmonk
+        examples:
+            - name: release_v1_0_0
+              manifest: |-
+                {
+                  "date": "2026-05-18T12:00:00Z",
+                  "description": "Initial production launch. Includes the new pricing page.",
+                  "project_id": "${listmonk_project.marketing_site.id}",
+                  "title": "Release v1.0.0"
+                }
+              references:
+                project_id: listmonk_project.marketing_site.id
+        argumentDocs:
+            created_at: (String)
+            date: (String) RFC 3339 timestamp the reference annotates.
+            description: (String)
+            id: (String) The ID of this resource.
+            project_id: (String) Owning Project ID.
+            title: (String)
+            updated_at: (String)
+        importStatements:
+            - terraform import listmonk_reference.release_v1_0_0 <reference-id>

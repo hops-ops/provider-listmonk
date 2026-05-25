@@ -1,0 +1,10 @@
+# Build output
+_output/
+.cache/
+.work/
+
+# Generator workspace
+.tmp/
+
+# Local terraform-mirror config
+.terraformrc

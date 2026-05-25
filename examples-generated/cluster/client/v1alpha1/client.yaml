@@ -1,0 +1,16 @@
+apiVersion: client.listmonk.crossplane.io/v1alpha1
+kind: Client
+metadata:
+  annotations:
+    meta.upbound.io/example-id: client/v1alpha1/client
+  labels:
+    testing.upbound.io/example-name: web_sdk
+  name: web-sdk
+spec:
+  forProvider:
+    cors: https://example.com https://www.example.com
+    name: Marketing site - Web SDK
+    projectIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: marketing_site
+    type: write

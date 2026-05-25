@@ -1,0 +1,16 @@
+apiVersion: reference.listmonk.crossplane.io/v1alpha1
+kind: Reference
+metadata:
+  annotations:
+    meta.upbound.io/example-id: reference/v1alpha1/reference
+  labels:
+    testing.upbound.io/example-name: release_v1_0_0
+  name: release-v1-0-0
+spec:
+  forProvider:
+    date: "2026-05-18T12:00:00Z"
+    description: Initial production launch. Includes the new pricing page.
+    projectIdSelector:
+      matchLabels:
+        testing.upbound.io/example-name: marketing_site
+    title: Release v1.0.0
