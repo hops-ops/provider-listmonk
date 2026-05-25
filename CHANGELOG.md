@@ -1,19 +1,6 @@
-# Changelog
+### What's changed in v0.0.3
 
-vnext generates and overwrites this file at each release-tag CI run.
-A placeholder is committed for the first release so the
-`workflow-simple-release` reusable workflow's `bodyFile: CHANGELOG.md`
-parameter has something to read from.
+* fix: bump TERRAFORM_PROVIDER_VERSION 0.2.1 → 0.2.2 (picks up RemoveResource-on-empty-state.ID fix in upstream) (by @patrickleet)
 
-## v0.0.1
 
-Initial release — upjet-generated Crossplane provider for Listmonk.
-
-Resources (cluster-scoped + namespaced variants of each):
-
-- `settings.listmonk.crossplane.io.SecuritySettings`
-- `settings.listmonk.crossplane.io.AppSettings`
-- `identity.listmonk.crossplane.io.UserRole`
-- `identity.listmonk.crossplane.io.User`
-
-Generated from `hops-ops/terraform-provider-listmonk v0.2.0` via upjet v2.
+See full diff: [v0.0.2...v0.0.3](https://github.com/hops-ops/provider-listmonk/compare/v0.0.2...v0.0.3)
