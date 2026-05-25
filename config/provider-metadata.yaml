@@ -1,112 +1,96 @@
 name: hops-ops/listmonk
 resources:
-    listmonk_client:
+    listmonk_app_settings Resource - listmonk:
         subCategory: ""
-        description: An OpenPanel SDK credential (Client). type=write is what your front-end SDK ships with; type=read reads analytics out via the API; type=root can call /manage. The secret is returned only on create.
-        name: listmonk_client
-        title: listmonk_client Resource - listmonk
-        examples:
-            - name: web_sdk
-              manifest: |-
-                {
-                  "cors": "https://example.com https://www.example.com",
-                  "name": "Marketing site - Web SDK",
-                  "project_id": "${listmonk_project.marketing_site.id}",
-                  "type": "write"
-                }
-              references:
-                project_id: listmonk_project.marketing_site.id
-            - name: automation
-              manifest: |-
-                {
-                  "name": "Terraform automation",
-                  "project_id": "${listmonk_project.marketing_site.id}",
-                  "type": "root"
-                }
-              references:
-                project_id: listmonk_project.marketing_site.id
+        description: 'Listmonk app/general settings — the app.* rows of the settings table. Singleton per Listmonk instance. Each field is independently managed: a field declared in HCL becomes the source of truth; a field left null is not touched on the server, so operator UI edits to unmanaged fields are preserved. v0.1 covers the most common knobs (root URL, from-email, site name, branding, lang, concurrency, message rate). Less-common fields (app.batch_size, app.max_send_errors, etc.) can be added in later versions of the provider.'
+        name: listmonk_app_settings Resource - listmonk
+        title: listmonk_app_settings Resource - listmonk
         argumentDocs:
-            cors: (List of String) List of allowed origins (write clients only).
-            created_at: (String)
-            id: (String) Client ID assigned by OpenPanel. Used as the SDK's clientId and the listmonk-client-id header value.
-            name: (String) Human-readable name shown in the OpenPanel dashboard.
-            project_id: (String) Owning Project ID. Required.
-            secret: (String, Sensitive) The sec_* secret. Populated only at create-time; subsequent reads return null.
-            type: (String) One of read, write, root. Drives which API surfaces accept this Client. Immutable after create.
-            updated_at: (String)
+            concurrency: (Number) Number of parallel worker goroutines used for campaign sending. Maps to app.concurrency.
+            favicon_url: (String) Public URL to a favicon used in the admin UI + subscriber pages. Maps to app.favicon_url.
+            from_email: '(String) Default From: address used when sending campaign mail. Maps to app.from_email.'
+            id: (String) Synthetic ID for the singleton app settings group. Always app.
+            lang: (String) Default UI language code (e.g. en, de, fr). Maps to app.lang.
+            logo_url: (String) Public URL to a logo image used in the admin UI + subscriber pages. Maps to app.logo_url.
+            message_rate: (Number) Max messages per second per concurrency worker. Maps to app.message_rate.
+            root_url: (String) Public root URL Listmonk uses when constructing absolute links (subscription confirm, click-tracking, OIDC redirect URI). E.g. https://marketing.example.com. Maps to app.root_url.
+            site_name: (String) Brand name shown in the admin UI + subscriber-facing pages. Maps to app.site_name.
+        importStatements: []
+    listmonk_security_settings:
+        subCategory: ""
+        description: 'Listmonk Security settings — the security.* rows of the settings table. Singleton resource per Listmonk instance (one security section per server). v0.1 manages the security.oidc sub-block; future versions will add security.captcha and security.basic_auth. Drift behavior: only sub-blocks declared in this resource are reconciled. Operator UI edits to undeclared sub-blocks (e.g. CAPTCHA) are preserved. Operator UI edits to managed sub-blocks are reverted on the next terraform apply. Client secret: Listmonk masks oidc.client_secret with bullet characters on GET /api/settings, so the provider keeps the value Terraform last wrote authoritative in state — drift on client_secret cannot be detected and will only re-converge on the next apply. Rotate by changing the HCL value and applying.'
+        name: listmonk_security_settings
+        title: listmonk_security_settings Resource - listmonk
+        examples:
+            - name: main
+              manifest: |-
+                {
+                  "oidc": [
+                    {
+                      "auto_create_users": false,
+                      "client_id": "${var.oidc_client_id}",
+                      "client_secret": "${var.oidc_client_secret}",
+                      "default_list_role_id": null,
+                      "default_user_role_id": null,
+                      "enabled": true,
+                      "provider_name": "Zitadel",
+                      "provider_url": "https://auth.example.com"
+                    }
+                  ]
+                }
+              references:
+                oidc.client_id: var.oidc_client_id
+                oidc.client_secret: var.oidc_client_secret
+        argumentDocs:
+            auto_create_users: (Boolean) When true, sign-in by an unknown OIDC subject creates a Listmonk user assigned the role identified by default_user_role_id. Listmonk's OIDC subject-to-role mapping does not consume groups/roles claims — see the provider README for the explicit-allowlist alternative.
+            client_id: (String) OIDC application client ID.
+            client_secret: (String, Sensitive) OIDC application client secret. Write-only — Listmonk masks the value on read.
+            default_list_role_id: (Number) List role ID assigned to auto-created users. Leave null to leave Listmonk's default in place.
+            default_user_role_id: (Number) User role ID assigned to auto-created users (typically a listmonk_user_role ID). Leave null to leave Listmonk's default in place.
+            enabled: (Boolean) Enable OIDC sign-in.
+            id: (String) Synthetic ID for the singleton settings section. Always security.
+            oidc: (Block, Optional) OpenID Connect SSO configuration (the security.oidc row). When this block is omitted the provider does not touch the server-side OIDC settings. (see below for nested schema)
+            provider_name: (String) Display name shown on the sign-in page (e.g. Zitadel).
+            provider_url: (String) OIDC issuer base URL (e.g. https://auth.example.com). Listmonk fetches <provider_url>/.well-known/openid-configuration to discover endpoints.
         importStatements:
             - |-
-              # Note: importing a Client populates state but cannot recover the
-              # `secret` attribute — OpenPanel does not return it on subsequent reads.
-              # Operators who need the secret post-import must either store it
-              # out-of-band at create time or recreate the Client.
-              terraform import listmonk_client.web_sdk <client-id>
-    listmonk_organization:
+              #!/usr/bin/env bash
+              # The Listmonk Security settings section is a singleton — there is
+              # exactly one `security.*` group of rows per Listmonk instance. Import
+              # uses the sentinel ID `security`.
+              #
+              # IMPORTANT: Listmonk masks `oidc.client_secret` on read with bullet
+              # characters, so on import the client_secret in Terraform state is
+              # empty. Re-set it in your HCL and apply to push the real value.
+              terraform import listmonk_security_settings.main security
+    listmonk_user Resource - listmonk:
         subCategory: ""
-        description: An OpenPanel Organization. The top-level tenant primitive; scopes Projects, Clients, References, and Members.
-        name: listmonk_organization
-        title: listmonk_organization Resource - listmonk
-        examples:
-            - name: acme
-              manifest: |-
-                {
-                  "name": "Acme",
-                  "timezone": "America/Chicago"
-                }
+        description: 'A Listmonk User. Two types: user (interactive admin) and api (machine credential). For api users the password IS the plaintext token used for HTTP Basic-Auth — Listmonk doesn''t have a separate token-mint endpoint. After creating a new api user, the Listmonk pod must be restarted before the credential is recognized (the apiUsers cache is loaded only at startup).'
+        name: listmonk_user Resource - listmonk
+        title: listmonk_user Resource - listmonk
         argumentDocs:
-            created_at: (String)
-            id: (String) Organization ID. Slugified from the name when not specified at create-time.
-            name: (String) Human-readable Organization name. Shown in the OpenPanel dashboard.
-            timezone: (String) IANA timezone (e.g. America/Chicago). Drives the dashboard's default reporting window.
-            updated_at: (String)
-        importStatements:
-            - terraform import listmonk_organization.acme <organization-id>
-    listmonk_project:
-        subCategory: ""
-        description: An OpenPanel Project. Projects scope SDK clients and event references; they are the unit a tenant app integrates against.
-        name: listmonk_project
-        title: listmonk_project Resource - listmonk
-        examples:
-            - name: marketing_site
-              manifest: |-
-                {
-                  "cors": "https://example.com https://www.example.com",
-                  "domain": "example.com",
-                  "name": "Marketing site"
-                }
-        argumentDocs:
-            cors: (List of String) List of allowed origins for the Project's write clients (the JS SDK CORS allowlist).
             created_at: (String) RFC 3339 timestamp.
-            domain: (String) Primary site domain associated with the Project. Optional metadata.
-            id: (String) Project ID assigned by OpenPanel.
-            name: (String) Human-readable Project name. Shown in the OpenPanel dashboard.
-            organization_id: (String) ID of the Organization this Project belongs to. Inferred from the provider's root Client credential.
+            email: (String) Unique email address. For api users this doesn't need to be deliverable but must still be unique.
+            id: (String) Numeric user ID assigned by Listmonk (stringified for TF state).
+            list_role_id: (Number) Optional ID of a list role (listmonk_list_role) that defines this user's per-list access. Null leaves it unset.
+            name: (String) Display name shown in the Listmonk admin UI.
+            password: '(String, Sensitive) For type = api: the plaintext token used for HTTP Basic-Auth. For type = user: the operator-chosen password (Listmonk stores it bcrypt-hashed; never returned on Read so drift on it is undetectable — rotate by changing the HCL value and applying).'
+            password_login: (Boolean) Whether this user can sign in via the Listmonk admin UI form. For api users set false. For user users typically true.
+            status: '(String) Lifecycle status: enabled or disabled. Disabled users can''t authenticate but their row is preserved.'
+            type: '(String) User type: user (interactive) or api (machine credential whose password is the plaintext Basic-Auth token).'
             updated_at: (String) RFC 3339 timestamp.
-        importStatements:
-            - terraform import listmonk_project.marketing_site <project-id>
-    listmonk_reference:
+            user_role_id: (Number) ID of the user role (listmonk_user_role) that defines this user's permissions. Use 1 for the Listmonk-seeded Super Admin role.
+            username: (String) Unique username. Becomes the principal name for Basic-Auth on api users; the display name in the Listmonk admin UI for user users.
+        importStatements: []
+    listmonk_user_role Resource - listmonk:
         subCategory: ""
-        description: A Reference annotates an event in the OpenPanel timeline (deploy, campaign, incident). Surfaces on dashboards alongside the analytics.
-        name: listmonk_reference
-        title: listmonk_reference Resource - listmonk
-        examples:
-            - name: release_v1_0_0
-              manifest: |-
-                {
-                  "date": "2026-05-18T12:00:00Z",
-                  "description": "Initial production launch. Includes the new pricing page.",
-                  "project_id": "${listmonk_project.marketing_site.id}",
-                  "title": "Release v1.0.0"
-                }
-              references:
-                project_id: listmonk_project.marketing_site.id
+        description: A Listmonk User Role — a named bundle of dotted-string permissions (settings:manage, users:get, lists:manage_all, etc.). Assigned to Users via the user_role_id field. The Super Admin role (id=1) is seeded by Listmonk's install migration and should not be managed by Terraform.
+        name: listmonk_user_role Resource - listmonk
+        title: listmonk_user_role Resource - listmonk
         argumentDocs:
-            created_at: (String)
-            date: (String) RFC 3339 timestamp the reference annotates.
-            description: (String)
-            id: (String) The ID of this resource.
-            project_id: (String) Owning Project ID.
-            title: (String)
-            updated_at: (String)
-        importStatements:
-            - terraform import listmonk_reference.release_v1_0_0 <reference-id>
+            created_at: (String) RFC 3339 timestamp.
+            id: (String) Numeric role ID assigned by Listmonk (stringified for TF state). Stable for the lifetime of the role.
+            name: (String) Human-readable role name. Shown in the Listmonk admin UI's role picker.
+            permissions: (Set of String) Set of dotted-string permissions granted by this role. See Listmonk's source for the canonical list (e.g. settings:get, settings:manage, users:get, users:manage, roles:get, roles:manage, lists:get_all, lists:manage_all, templates:get, templates:manage, campaigns:get, campaigns:manage, subscribers:manage, bounces:get, bounces:manage, media:get, media:manage, tx:send).
+            updated_at: (String) RFC 3339 timestamp.
+        importStatements: []

@@ -9,24 +9,22 @@ import (
 
 	"github.com/crossplane/upjet/v2/pkg/controller"
 
-	client "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/client/client"
-	organization "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/organization/organization"
-	ssoconfig "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/organization/ssoconfig"
-	project "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/project/project"
+	user "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/identity/user"
+	userrole "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/identity/userrole"
 	providerconfig "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/providerconfig"
-	reference "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/reference/reference"
+	appsettings "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/settings/appsettings"
+	securitysettings "github.com/hops-ops/provider-listmonk/internal/controller/namespaced/settings/securitysettings"
 )
 
 // Setup creates all controllers with the supplied logger and adds them to
 // the supplied manager.
 func Setup(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		client.Setup,
-		organization.Setup,
-		ssoconfig.Setup,
-		project.Setup,
+		user.Setup,
+		userrole.Setup,
 		providerconfig.Setup,
-		reference.Setup,
+		appsettings.Setup,
+		securitysettings.Setup,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err
@@ -39,12 +37,11 @@ func Setup(mgr ctrl.Manager, o controller.Options) error {
 // the supplied manager gated.
 func SetupGated(mgr ctrl.Manager, o controller.Options) error {
 	for _, setup := range []func(ctrl.Manager, controller.Options) error{
-		client.SetupGated,
-		organization.SetupGated,
-		ssoconfig.SetupGated,
-		project.SetupGated,
+		user.SetupGated,
+		userrole.SetupGated,
 		providerconfig.SetupGated,
-		reference.SetupGated,
+		appsettings.SetupGated,
+		securitysettings.SetupGated,
 	} {
 		if err := setup(mgr, o); err != nil {
 			return err

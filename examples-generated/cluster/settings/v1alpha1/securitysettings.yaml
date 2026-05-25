@@ -1,0 +1,10 @@
+apiVersion: settings.listmonk.crossplane.io/v1alpha1
+kind: SecuritySettings
+metadata:
+  annotations:
+    meta.upbound.io/example-id: settings/v1alpha1/securitysettings
+  labels:
+    testing.upbound.io/example-name: main
+  name: main
+spec:
+  forProvider: {}

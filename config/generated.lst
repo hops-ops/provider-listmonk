@@ -1,7 +1,6 @@
 [
-  "openpanel_client",
-  "openpanel_organization",
-  "openpanel_organization_sso_config",
-  "openpanel_project",
-  "openpanel_reference"
+  "listmonk_app_settings",
+  "listmonk_security_settings",
+  "listmonk_user",
+  "listmonk_user_role"
 ]
