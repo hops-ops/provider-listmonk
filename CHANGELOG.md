@@ -1,19 +1,14 @@
-# Changelog
+### What's changed in v0.0.2
 
-vnext generates and overwrites this file at each release-tag CI run.
-A placeholder is committed for the first release so the
-`workflow-simple-release` reusable workflow's `bodyFile: CHANGELOG.md`
-parameter has something to read from.
+* fix: bump TERRAFORM_PROVIDER_VERSION 0.2.0 → 0.2.1 (by @patrickleet)
 
-## v0.0.1
+  Picks up the upstream provider's empty-state.ID guard fix in Read
+  (terraform-provider-listmonk v0.2.1) — without that, fresh
+  UserRole/User MRs fail their first observe with 'Invalid id in
+  state: strconv.ParseInt parsing empty string'.
 
-Initial release — upjet-generated Crossplane provider for Listmonk.
+  Provider schema is unchanged between v0.2.0 and v0.2.1, so
+  config/schema.json doesn't need to regenerate.
 
-Resources (cluster-scoped + namespaced variants of each):
 
-- `settings.listmonk.crossplane.io.SecuritySettings`
-- `settings.listmonk.crossplane.io.AppSettings`
-- `identity.listmonk.crossplane.io.UserRole`
-- `identity.listmonk.crossplane.io.User`
-
-Generated from `hops-ops/terraform-provider-listmonk v0.2.0` via upjet v2.
+See full diff: [v0.0.1...v0.0.2](https://github.com/hops-ops/provider-listmonk/compare/v0.0.1...v0.0.2)
