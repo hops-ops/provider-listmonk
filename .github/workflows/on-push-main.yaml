@@ -41,7 +41,7 @@ jobs:
     name: Version and Tag
     needs:
       - build
-    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@v1.21.0
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@7ad6b7bb2461beb5d78b0d8b7cfbd66b251bbb1d # v1.21.0
     secrets:
       DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     with:
