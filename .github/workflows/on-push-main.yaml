@@ -32,7 +32,7 @@ jobs:
       - run: go build -v ./...
       - run: go vet ./...
       - name: Run linters
-        uses: golangci/golangci-lint-action@1e7e51e771db61008b38414a730f564565cf7c20 # v9.2.0
+        uses: golangci/golangci-lint-action@82606bf257cbaff209d206a39f5134f0cfbfd2ee # v9.2.1
         with:
           version: latest
           args: --timeout 10m
@@ -41,7 +41,7 @@ jobs:
     name: Version and Tag
     needs:
       - build
-    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@v1.21.0
+    uses: unbounded-tech/workflow-vnext-tag/.github/workflows/workflow.yaml@57940706ad2325bd4f1fe50bb91880b643e9afae # v1.21.3
     secrets:
       DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
     with:
