@@ -58,7 +58,7 @@ GO_SUBDIRS += cmd internal apis
 USE_HELM = true
 
 # Pinned to match crossplane/upjet-provider-template (overrides crossplane/build defaults where needed).
-KIND_VERSION = v0.31.0
+KIND_VERSION = v0.32.0
 UPTEST_VERSION = v2.2.0
 CRDDIFF_VERSION = v0.12.1
 CROSSPLANE_CLI_VERSION = v2.3.1
