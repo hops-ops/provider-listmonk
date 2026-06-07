@@ -14,6 +14,9 @@ on:
 permissions:
   contents: read
 
+env:
+  PACKAGE_PLATFORMS: linux_amd64 linux_arm64
+
 jobs:
   build:
     name: Build & Lint
@@ -35,3 +38,33 @@ jobs:
         with:
           version: latest
           args: --timeout 10m
+
+  xpkg-build:
+    name: Build multi-platform xpkg
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@49b3bc8e6bdd4a60e6116a5414239cba5943d3cf # v3.6.0
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435 # v3.11.1
+
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+        with:
+          submodules: recursive
+
+      - uses: actions/setup-go@4a3601121dd01d1626a1e23e37211e3254c1c06c # v6.4.0
+        with:
+          go-version-file: 'go.mod'
+          cache: true
+
+      - name: Build linux xpkgs
+        run: make build.all PLATFORMS="${PACKAGE_PLATFORMS}" VERSION=v0.0.0
+
+      - name: Check package artifacts
+        run: |
+          set -euo pipefail
+          for platform in ${PACKAGE_PLATFORMS}; do
+            test -f "_output/xpkg/${platform}/provider-listmonk-v0.0.0.xpkg"
+          done

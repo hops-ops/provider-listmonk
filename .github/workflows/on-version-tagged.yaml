@@ -15,6 +15,9 @@ permissions:
   contents: write
   packages: write
 
+env:
+  PACKAGE_PLATFORMS: linux_amd64 linux_arm64
+
 jobs:
   release:
     uses: unbounded-tech/workflow-simple-release/.github/workflows/workflow.yaml@v2.1.1
@@ -69,7 +72,7 @@ jobs:
 
       - name: Build the xpkg + provider runtime image
         run: |
-          make build VERSION="v${VERSION}" 2>&1 | tail -50
+          make build.all PLATFORMS="${PACKAGE_PLATFORMS}" VERSION="v${VERSION}"
         env:
           VERSION: ${{ steps.version.outputs.version }}
 
@@ -81,15 +84,14 @@ jobs:
           # a Provider manifest pinned to `:v0.1.0` etc.
           shopt -s nullglob
           xpkgs=(_output/xpkg/linux_amd64/*.xpkg _output/xpkg/linux_arm64/*.xpkg)
-          if [ ${#xpkgs[@]} -eq 0 ]; then
-            echo "::error::no xpkg artifacts produced by make build"
+          if [ ${#xpkgs[@]} -ne 2 ]; then
+            echo "::error::expected amd64 and arm64 xpkg artifacts, found ${#xpkgs[@]}"
             ls -la _output/ _output/xpkg/ 2>&1 || true
             exit 1
           fi
           IMAGE="ghcr.io/${{ github.repository }}"
-          for xpkg in "${xpkgs[@]}"; do
-            echo "Pushing $xpkg to ${IMAGE}:v${VERSION}"
-            crossplane xpkg push "${IMAGE}:v${VERSION}" -f "$xpkg"
-          done
+          files=$(IFS=,; echo "${xpkgs[*]}")
+          echo "Pushing multi-platform package ${files} to ${IMAGE}:v${VERSION}"
+          crossplane xpkg push --package-files "${files}" "${IMAGE}:v${VERSION}"
         env:
           VERSION: ${{ steps.version.outputs.version }}
